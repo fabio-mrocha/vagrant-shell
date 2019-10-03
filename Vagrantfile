@@ -67,6 +67,9 @@ Vagrant.configure("2") do |config|
         if "#{conf["image"]}" == "centos/7"
 			machine528.vm.provision "shell", path: "./scripts/script_centos.sh"
         end
+		if name == "zabbix"
+			machine528.vm.provision "shell", path: "./scripts/script_zabbix.sh"
+		end
 		if name == "graylog"
 			machine528.vm.provision "shell", inline: "wget https://apt.puppetlabs.com/puppet-release-bionic.deb && sudo dpkg -i puppet-release-bionic.deb"
 			machine528.vm.provision "shell", inline: "apt update && apt install snmpd puppet-agent -y"
