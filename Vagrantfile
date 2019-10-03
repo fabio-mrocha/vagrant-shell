@@ -49,7 +49,6 @@ Vagrant.configure("2") do |config|
     end
   end
   
-  
   machines528.each do |name, conf|
     config.vm.define "#{name}" do |machine528|
 	  machine528.vm.synced_folder ".", "/vagrant", disabled: true
