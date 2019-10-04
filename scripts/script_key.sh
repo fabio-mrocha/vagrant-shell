@@ -1,5 +1,5 @@
 echo "127.0.0.1 localhost
-192.168.99.10 zabbix zabbix.4linux.com.br zabbix.dexter.com.br
+192.168.99.10 zabbix zabbix.4linux.com.br zabbix.dexter.com.br puppet
 192.168.99.11 graylog graylog.dexter.com.br
 192.168.99.12 prometheus prometheus.dexter.com.br
 192.168.99.13 4flix 4flix.dexter.com.br" > /etc/hosts
