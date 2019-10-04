@@ -10,7 +10,7 @@ machines525 = {
 }
 
 machines528 = {
-  "zabbix" => {"memory" => "1024", "cpu" => "1", "ip" => "10", "image" => "ubuntu/bionic64"},
+  "zabbix" => {"memory" => "2048", "cpu" => "1", "ip" => "10", "image" => "ubuntu/bionic64"},
   "graylog" => {"memory" => "4096", "cpu" => "2", "ip" => "11", "image" => "ubuntu/bionic64"},
   "prometheus" => {"memory" => "2048", "cpu" => "1", "ip" => "12", "image" => "centos/7"},
   "4flix" => {"memory" => "2048", "cpu" => "1", "ip" => "13", "image" => "centos/7"},
@@ -69,6 +69,9 @@ Vagrant.configure("2") do |config|
         end
 		if name == "zabbix"
 			machine528.vm.provision "shell", path: "./scripts/script_zabbix.sh"
+		end
+		if name == "prometheus"
+			machine528.vm.provision "shell", path: "./scripts/script_prometheus.sh"
 		end
 		if name == "graylog"
 			machine528.vm.provision "shell", inline: "wget https://apt.puppetlabs.com/puppet-release-bionic.deb && sudo dpkg -i puppet-release-bionic.deb"
