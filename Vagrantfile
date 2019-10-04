@@ -10,7 +10,7 @@ machines525 = {
 }
 
 machines528 = {
-  "zabbix" => {"memory" => "2048", "cpu" => "1", "ip" => "10", "image" => "ubuntu/bionic64"},
+  "zabbix" => {"memory" => "4096", "cpu" => "1", "ip" => "10", "image" => "ubuntu/bionic64"},
   "graylog" => {"memory" => "4096", "cpu" => "2", "ip" => "11", "image" => "ubuntu/bionic64"},
   "prometheus" => {"memory" => "2048", "cpu" => "1", "ip" => "12", "image" => "centos/7"},
   "4flix" => {"memory" => "2048", "cpu" => "1", "ip" => "13", "image" => "centos/7"},
