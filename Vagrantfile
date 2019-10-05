@@ -6,7 +6,9 @@ machines525 = {
   "container" => {"memory" => "1536", "cpu" => "1", "ip" => "30", "image" => "centos/7"},
   "scm" => {"memory" => "256", "cpu" => "1", "ip" => "40", "image" => "debian/buster64"},
   "log" => {"memory" => "2048", "cpu" => "1", "ip" => "50", "image" => "ubuntu/bionic64"},
-  "automation" => {"memory" => "1536", "cpu" => "2", "ip" => "10", "image" => "centos/7"}
+  "automation" => {"memory" => "1536", "cpu" => "2", "ip" => "10", "image" => "centos/7"},
+  "wordpress" => {"memory" => "1024", "cpu" => "2", "ip" => "100", "image" => "ubuntu/bionic64"},
+  "mysql" => {"memory" => "1024", "cpu" => "2", "ip" => "101", "image" => "centos/7"},
 }
 
 machines528 = {
@@ -45,6 +47,12 @@ Vagrant.configure("2") do |config|
           machine525.vm.provision "shell", inline: "echo '#{name}.4labs.example' > /etc/hostname"
           machine525.vm.provision "shell", inline: "hostnamectl set-hostname #{name}.4labs.example"
         end
+		if name == "wordpress"
+			machine525.vm.provision "shell", path: "./scripts/script_wordpress.sh"
+		end
+		if name == "mysql"
+			machine525.vm.provision "shell", path: "./scripts/script_mysql.sh"
+		end
 	  machine525.vm.provision "shell", path: "./scripts/script.sh"
     end
   end
