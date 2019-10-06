@@ -77,6 +77,7 @@ Vagrant.configure("2") do |config|
         end
 		if name == "zabbix"
 			machine528.vm.provision "shell", path: "./scripts/script_zabbix.sh"
+			machine528.vm.synced_folder ".", "/vagrant", disabled: false
 		end
 		if name == "prometheus"
 			machine528.vm.provision "shell", path: "./scripts/script_prometheus.sh"
