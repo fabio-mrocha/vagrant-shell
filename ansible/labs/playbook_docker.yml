@@ -1,0 +1,74 @@
+---
+
+- hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+  - name: Install pre-requerements Docker CE
+    yum:
+      name:
+        - yum-utils
+        - device-mapper-persistent-data
+        - lvm2
+      state: latest
+    when: 
+      - ansible_facts['distribution'] == "CentOS"
+
+  - name: Import Docker CE repository gpg key
+    rpm_key:
+      key: https://download.docker.com/linux/centos/gpg
+      state: present
+    when:
+      - ansible_facts['distribution'] == "CentOS"
+
+  - name: Add Docker CE repository
+    get_url:
+      url: https://download.docker.com/linux/centos/docker-ce.repo
+      dest: /etc/yum.repos.d/docker-ce.repo
+      force: yes
+      owner: root
+      group: root
+      mode: 0644
+    when:
+      - ansible_facts['distribution'] == "CentOS"
+   
+  - name: Install Docker CE
+    yum:
+      name:
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+      state: latest
+      update_cache: yes
+    when:
+      - ansible_facts['distribution'] == "CentOS"
+      
+  - name: Install prerequisites
+    apt:
+      name: ['apt-transport-https', 'ca-certificates', 'curl', 'gnupg2' ,'software-properties-common']
+      update_cache: yes
+    when:
+      - ansible_facts['distribution'] == "Ubuntu"
+
+  - name: Add Docker GPG key
+    apt_key: url=https://download.docker.com/linux/ubuntu/gpg
+    when:
+      - ansible_facts['distribution'] == "Ubuntu"
+
+  - name: Add Docker APT repository
+    apt_repository:
+      repo: deb [arch=amd64] https://download.docker.com/linux/{{ansible_distribution|lower}} {{ansible_distribution_release}} stable
+    when:
+      - ansible_facts['distribution'] == "Ubuntu"
+
+  - name: Install Docker on Ubuntu
+    apt:
+      pkg:
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+      update_cache: yes
+    when:
+      - ansible_facts['distribution'] == "Ubuntu"
+    
+...

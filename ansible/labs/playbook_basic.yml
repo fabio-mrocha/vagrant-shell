@@ -1,0 +1,123 @@
+---
+
+- hosts: all
+  become: yes
+  gather_facts: yes
+  tasks:
+  - name: Install Packages on CentOS
+    yum:
+      name:
+        - wget
+        - net-tools
+        - vim
+        - curl
+        - git
+        - ntpdate
+        - "@Development tools"
+      state: latest
+    when:
+      - ansible_facts['distribution'] == "CentOS"
+ 
+  - name: Install packages on Debian from the internet
+    apt:
+      deb: https://example.com/python-ppq_0.1-1_all.deb
+      autoclean: yes
+    when:
+      - ansible_facts['distribution'] == "Debian"
+      
+  - name: Install packages on Ubuntu
+    apt:
+      name: "{{ packages }}"
+      state: latest
+    vars:
+      packages:
+        - wget
+        - vim
+        - git
+        - curl
+        - build-essential
+        - ntpdate
+        - aptitude
+      update_cache: yes
+    when:
+      - ansible_facts['distribution'] == "Ubuntu"
+   
+  - name: Add hostname at /etc/hosts
+    lineinfile: dest=/etc/hosts line={{ item }}
+    with_items:
+      - '192.168.99.100 debian.4labs.com.br debian'
+      - '192.168.99.101 centos.4labs.com.br centos'
+      - '192.168.99.102 ubuntu.4labs.com.br ubuntu'
+      - '192.168.99.103 zabbix.4labs.com.br zabbix'
+      
+  - name: Creating SSH directory
+    file:
+      path: /root/.ssh/
+      state: directory
+      owner: root
+      group: root
+      mode: 0600
+      recurse: yes
+      
+  - name: Copying SSH file to root home directory
+    copy:
+      src: authorized_keys
+      dest: /root/.ssh
+      owner: root
+      group: root
+      mode: 0600
+      force: yes
+
+  - name: Copying SSH file to vagrant home directory
+    copy:
+      src: id_rsa
+      dest: /home/vagrant/.ssh
+      owner: vagrant
+      group: vagrant
+      mode: 0600
+      force: yes
+      
+  - name: Enabling password at SSH connections
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: 'PasswordAuthentication no'
+      line: 'PasswordAuthentication yes'
+    notify:
+      - restart ssh
+  
+  - name: Alter /etc/profile
+    lineinfile: dest=/etc/profile line={{ item }}
+    with_items:
+      - '#--- Variaveis e Alias Customizados ---#'
+      - 'export HISTTIMEFORMAT="%d/%m/%Y - %H:%M:%S - "'
+      - 'export HISTSIZE="5000"'
+      - 'export HISTFILESIZE="5000"'
+#      - 'export TERM="linux"'
+      - 'alias ls="ls -lh --color"'
+      - 'alias grep="grep -i --color"'
+      - 'alias vi="vim"'
+      - 'alias rm="rm -i"'
+
+  - name: Edit vimrc - CentOS
+    lineinfile: dest=/etc/vimrc line={{ item }}
+    with_items:
+      - 'set nu'
+      - 'set cursorcolumn'
+    when:
+      - ansible_facts['distribution'] == "CentOS"
+     
+  - name: Edit vimrc - Ubuntu
+    lineinfile: dest=/etc/vim/vimrc line={{ item }}
+    with_items:
+      - 'set nu'
+      - 'set cursorcolumn'
+    when:
+      - ansible_facts['distribution'] == "Ubuntu"
+      
+  handlers:
+    - name: restart ssh
+      service: 
+        name: sshd
+        state: restarted
+
+...

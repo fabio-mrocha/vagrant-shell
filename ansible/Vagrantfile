@@ -1,0 +1,70 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby  :
+
+# needed install plugin by command: vagrant plugin install vagrant-guest_ansible
+
+machines_ansible = {
+  "vm-docker" => {"memory" => "512", "cpu" => "1", "ip" => "100", "image" => "ubuntu/bionic64"},
+  "centos" => {"memory" => "512", "cpu" => "1", "ip" => "101", "image" => "centos/7"},
+  "ubuntu" => {"memory" => "512", "cpu" => "1", "ip" => "102", "image" => "ubuntu/bionic64"},
+  "vm-zabbix" => {"memory" => "512", "cpu" => "1", "ip" => "103", "image" => "centos/7"},
+  "ag-zabbix" => {"memory" => "512", "cpu" => "1", "ip" => "104", "image" => "ubuntu/bionic64"},
+}
+
+Vagrant.configure("2") do |config|
+
+  machines_ansible.each do |name, conf|
+    config.vm.define "#{name}" do |machine_ansible|
+      machine_ansible.vm.box = "#{conf["image"]}"
+      machine_ansible.vm.hostname = "#{name}"
+      machine_ansible.vm.network :private_network, ip: "192.168.99.#{conf["ip"]}", dns: "8.8.8.8"
+	  machine_ansible.vm.provision :guest_ansible do |ansible|
+		  ansible.limit = "all"
+		  ansible.playbook = "labs/playbook_basic.yml"
+		  ansible.inventory_path = "hosts"
+	  end
+      machine_ansible.vm.provider "virtualbox" do |vb|
+        vb.name = "#{name}"
+        vb.memory = conf["memory"]
+        vb.cpus = conf["cpu"]
+        vb.customize ["modifyvm", :id, "--groups", "/Ansible-VM"]
+      end
+	    if "#{conf["image"]}" == "ubuntu/bionic64"
+			machine_ansible.vm.provision :guest_ansible do |ansible|
+			  ansible.limit = "ubuntu"
+			  ansible.playbook = "labs/playbook_ubuntu.yml"
+			  ansible.inventory_path = "hosts"
+			  ansible.verbose = 'vvv'
+			end
+        end
+        if "#{conf["image"]}" == "centos/7"
+			machine_ansible.vm.provision :guest_ansible do |ansible|
+			  ansible.limit = "all"
+			  ansible.playbook = "labs/playbook_centos.yml"
+			  ansible.inventory_path = "hosts"
+			end
+        end
+		if name == "vm-zabbix"
+			machine_ansible.vm.provision :guest_ansible do |ansible|
+			  ansible.limit = "all"
+			  ansible.playbook = "labs/playbook_zabbix.yml"
+			  ansible.inventory_path = "hosts"
+			end
+		end
+		if name == "vm-docker"
+			machine_ansible.vm.provision :guest_ansible do |ansible|
+			  ansible.limit = "all"
+			  ansible.playbook = "labs/playbook_docker.yml"
+			  ansible.inventory_path = "hosts"
+			end
+		end
+		if name == "ag-zabbix"
+			machine_ansible.vm.provision :guest_ansible do |ansible|
+			  ansible.limit = "all"
+			  ansible.playbook = "labs/playbook_zabbix_agent.yml"
+			  ansible.inventory_path = "hosts"
+			end
+		end
+    end
+  end
+end

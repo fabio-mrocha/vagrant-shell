@@ -1,0 +1,74 @@
+---
+
+- hosts: all
+  become: true
+  gather_facts: true
+  
+  vars:
+    zabbix_version: 4.4
+  
+  tasks:
+  - name: Add repository Zabbix on CentOS
+    yum:
+      name:
+        - https://repo.zabbix.com/zabbix/{{zabbix_version}}/rhel/{{ansible_distribution_major_version}}/{{ansible_userspace_architecture}}/zabbix-release-{{zabbix_version}}-1.el7.noarch.rpm
+      update_cache: yes
+      state: present
+    when:
+      - ansible_facts['distribution'] == "CentOS"
+      
+  - name: Install Zabbix Repository on Ubuntu
+    apt:
+      deb: https://repo.zabbix.com/zabbix/{{zabbix_version}}/ubuntu/pool/main/z/zabbix-release/zabbix-release_{{zabbix_version}}-1+bionic_all.deb
+      autoclean: yes
+      update_cache: yes
+    ignore_errors: yes
+    when:
+      - ansible_facts['distribution'] == "Ubuntu"
+      
+  - name: Install Zabbix Agent on CentOS
+    yum:
+      name:
+        - zabbix-agent
+      state: present
+    when:
+      - ansible_facts['distribution'] == "CentOS"
+      
+  - name: Install Zabbix Agent on Ubuntu
+    apt:
+      pkg:
+        - zabbix-agent
+      state: latest
+      update_cache: yes
+    when:
+      - ansible_facts['distribution'] == "Ubuntu"
+      
+  - name: Alter Zabbix Agent
+    lineinfile:
+      path: /etc/zabbix/zabbix_agentd.conf
+      regexp: "{{ item.regexp }}"
+      line: "{{ item.line }}"
+    with_items:
+      - { regexp: 'Server=127.0.0.1', line: 'Server=zabbix.4labs.com.br' }
+      - { regexp: 'ServerActive=127.0.0.1', line: 'ServerActive=zabbix.4labs.com.br' }
+      - { regexp: '# AllowRoot=0', line: 'AllowRoot=1' }
+      - { regexp: 'Hostname=Zabbix server', line: 'Hostname={{ansible_hostname}}' }
+      - { regexp: '# HostMetadataItem=', line: 'HostMetadataItem=system.uname' }
+    notify:
+      - Restart Zabbix Agent
+      
+  - name: Alter SELinux to permissive mode
+    selinux:
+      policy: targeted
+      state: permissive
+    when:
+      - ansible_facts['distribution'] == "CentOS"
+
+  handlers:
+    - name: Restart Zabbix Agent
+      service: 
+        name: zabbix-agent
+        state: restarted
+        enabled: yes
+    
+...

@@ -1,0 +1,39 @@
+---
+
+- hosts: all
+  become: yes
+  tasks:
+  - name: Install Packages
+    yum:
+      name: "{{ item }}"
+      state: latest
+    loop:
+      - httpd
+      - vim
+      - ntpdate
+  - name: Start Apache
+    systemd:
+      name: httpd
+      state: started
+      enabled: yes
+#  - name: Move index.html file
+#    command: mv /var/www/html/index.html /var/www/html/index.html.orig
+  - name: Copy index.html file
+    copy:
+      src: index.html
+      dest: /var/www/html/index.html
+      force: yes
+  - name: Alter /etc/profile
+    lineinfile: dest=/etc/profile line={{ item }}
+    with_items:
+      - '#--- Variaveis e Alias Customizados ---#'
+      - 'export HISTTIMEFORMAT="%d/%m/%Y - %H:%M:%S - "'
+      - 'export HISTSIZE="5000"'
+      - 'export HISTFILESIZE="5000"'
+      - 'export TERM="linux"'
+      - 'alias ls="ls -lh --color"'
+      - 'alias grep="grep -i --color"'
+      - 'alias vi="vim"'
+      - 'alias rm="rm -i"'
+      
+...

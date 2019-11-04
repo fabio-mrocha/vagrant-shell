@@ -1,0 +1,184 @@
+---
+
+- hosts: all
+  become: true
+  gather_facts: true
+  
+  vars:
+    zabbix_version: 4.4
+  
+  tasks:
+  - name: Add repository Zabbix on CentOS
+    yum:
+      name:
+        - https://repo.zabbix.com/zabbix/{{zabbix_version}}/rhel/7/x86_64/zabbix-release-{{zabbix_version}}-1.el7.noarch.rpm
+      update_cache: yes
+      state: present
+    when:
+      - ansible_facts['distribution'] == "CentOS" 
+        
+  - name: Install Zabbix packages on CentOS
+    yum:
+      name:
+        - mariadb-server
+        - zabbix-server-mysql
+        - zabbix-web-mysql
+        - zabbix-agent
+        - zabbix-get
+        - httpd
+      state: present
+    when:
+      - ansible_facts['distribution'] == "CentOS"
+
+  - name: Install py-mysql via pip
+    pip:
+      name: pymysql
+      state: latest
+    when:
+      - ansible_facts['distribution'] == "CentOS"
+      
+  - name: Install Zabbix Repository on Ubuntu
+    apt:
+      deb: https://repo.zabbix.com/zabbix/{{zabbix_version}}/ubuntu/pool/main/z/zabbix-release/zabbix-release_{{zabbix_version}}-1+bionic_all.deb
+      autoclean: yes
+      update_cache: yes
+    ignore_errors: yes
+    when:
+      - ansible_facts['distribution'] == "Ubuntu"
+  
+  - name: Install Zabbix Server on Ubuntu
+    apt:
+      pkg:
+        - apache2
+        - zabbix-server-mysql
+        - zabbix-frontend-php
+        - zabbix-agent
+        - zabbix-apache-conf
+        - jq
+        - zabbix-get
+        - python-pymysql
+      state: latest
+      update_cache: yes
+    when:
+      - ansible_facts['distribution'] == "Ubuntu"
+
+  - name: Create DB Zabbix
+    command: mysql -u root -e "create database zabbix character set utf8 collate utf8_bin";
+    ignore_errors: yes
+    when:
+      - ansible_facts['distribution'] == "Ubuntu"
+    
+  - name: Create database user Zabbix with password and all database privileges
+    command: mysql -u root -e "grant all privileges on zabbix.* to zabbix@localhost identified by '4linux'";
+    ignore_errors: yes
+    when:
+      - ansible_facts['distribution'] == "Ubuntu"
+
+  - name: Restart MySQL Server service
+    service:
+      name: mariadb
+      state: restarted
+      enabled: 
+    when:
+      - ansible_facts['distribution'] == "CentOS"
+
+  - name: Create Zabbix DB
+    mysql_db:
+      name: zabbix
+      state: present
+    when:
+      - ansible_facts['distribution'] == "CentOS"
+      
+  - name: Create database user Zabbix with password and all database privileges
+    mysql_user:
+      name: zabbix
+      password: 4linux
+      priv: 'zabbix.*:ALL,GRANT'
+      state: present
+    when:
+      - ansible_facts['distribution'] == "CentOS"
+      
+  - name: Restore database
+    mysql_db:
+      login_user: zabbix
+      login_password: 4linux
+      name: zabbix
+      state: import
+      target: /usr/share/doc/zabbix-server-mysql-{{zabbix_version}}.1/create.sql.gz
+    ignore_errors: yes
+    when:
+      - ansible_facts['distribution'] == "CentOS"
+    
+  - name: Restore database
+    mysql_db:
+      login_user: zabbix
+      login_password: 4linux
+      name: zabbix
+      state: import
+      target: /usr/share/doc/zabbix-server-mysql/create.sql.gz
+    ignore_errors: yes
+    when:
+      - ansible_facts['distribution'] == "Ubuntu"
+ 
+  - name: Alter zabbix_server.conf file
+    lineinfile:
+      path: /etc/zabbix/zabbix_server.conf
+      regexp: '# DBPassword='
+      line: 'DBPassword=4linux'
+
+  - name: Alter timezone Apache
+    lineinfile:
+      path: /etc/zabbix/apache.conf
+      regexp: '# php_value date.timezone Europe/Riga'
+      line: 'php_value date.timezone America/Sao_Paulo'
+    when:
+      - ansible_facts['distribution'] == "Ubuntu"
+
+  - name: Alter timezone Apache
+    lineinfile:
+      path: /etc/httpd/conf.d/zabbix.conf
+      regexp: '# php_value date.timezone Europe/Riga'
+      line: 'php_value date.timezone America/Sao_Paulo'
+    when:
+      - ansible_facts['distribution'] == "CentOS"
+    
+  - name: Alter SELinux to permissive mode
+    selinux:
+      policy: targeted
+      state: permissive
+      
+  - name: Allow Zabbix root
+    lineinfile:
+      path: /etc/zabbix/zabbix_agentd.conf
+      regexp: '# AllowRoot=0'
+      line: 'AllowRoot=1'
+
+  - name: Restart Zabbix Server service
+    service:
+      name: zabbix-server
+      state: restarted
+      enabled: yes
+  
+  - name: Restart Zabbix Agent service
+    service:
+      name: zabbix-agent
+      state: restarted
+      enabled: yes
+      
+  - name: Restart Apache service on CentOS
+    service:
+      name: httpd
+      state: restarted
+      enabled: yes
+    when:
+      - ansible_facts['distribution'] == "CentOS"
+     
+  - name: Restart Apache service on Ubuntu
+    service:
+      name: apache2
+      state: restarted
+      enabled: yes
+    when:
+      - ansible_facts['distribution'] == "Ubuntu"
+      
+...
