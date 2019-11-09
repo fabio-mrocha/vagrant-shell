@@ -71,4 +71,10 @@
     when:
       - ansible_facts['distribution'] == "Ubuntu"
     
+  - name: Restart Docker service
+    service:
+      name: docker
+      state: restarted
+      enabled: yes
+    
 ...

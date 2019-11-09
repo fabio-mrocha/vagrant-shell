@@ -4,11 +4,11 @@
 # needed install plugin by command: vagrant plugin install vagrant-guest_ansible
 
 machines_ansible = {
-  "vm-docker" => {"memory" => "512", "cpu" => "1", "ip" => "100", "image" => "ubuntu/bionic64"},
-  "centos" => {"memory" => "512", "cpu" => "1", "ip" => "101", "image" => "centos/7"},
-  "ubuntu" => {"memory" => "512", "cpu" => "1", "ip" => "102", "image" => "ubuntu/bionic64"},
-  "vm-zabbix" => {"memory" => "512", "cpu" => "1", "ip" => "103", "image" => "centos/7"},
-  "ag-zabbix" => {"memory" => "512", "cpu" => "1", "ip" => "104", "image" => "ubuntu/bionic64"},
+  "manager01" => {"memory" => "512", "cpu" => "1", "ip" => "100", "image" => "ubuntu/bionic64"},
+  "manager02" => {"memory" => "512", "cpu" => "1", "ip" => "101", "image" => "centos/7"},
+  "worker01" => {"memory" => "512", "cpu" => "1", "ip" => "102", "image" => "ubuntu/bionic64"},
+  "worker02" => {"memory" => "512", "cpu" => "1", "ip" => "103", "image" => "centos/7"},
+  "worker03" => {"memory" => "512", "cpu" => "1", "ip" => "104", "image" => "ubuntu/bionic64"},
 }
 
 Vagrant.configure("2") do |config|
@@ -31,8 +31,8 @@ Vagrant.configure("2") do |config|
       end
 	    if "#{conf["image"]}" == "ubuntu/bionic64"
 			machine_ansible.vm.provision :guest_ansible do |ansible|
-			  ansible.limit = "ubuntu"
-			  ansible.playbook = "labs/playbook_ubuntu.yml"
+			  ansible.limit = "all"
+			  ansible.playbook = "labs/playbook_docker.yml"
 			  ansible.inventory_path = "hosts"
 			  ansible.verbose = 'vvv'
 			end
@@ -40,7 +40,7 @@ Vagrant.configure("2") do |config|
         if "#{conf["image"]}" == "centos/7"
 			machine_ansible.vm.provision :guest_ansible do |ansible|
 			  ansible.limit = "all"
-			  ansible.playbook = "labs/playbook_centos.yml"
+			  ansible.playbook = "labs/playbook_docker.yml"
 			  ansible.inventory_path = "hosts"
 			end
         end
